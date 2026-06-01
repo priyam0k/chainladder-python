@@ -92,6 +92,13 @@ def linkcode_resolve(domain: str, info: dict) -> str | None:
     # Construct a relative path using the source file path, enforce forward slash in case running on Windows.
     rel_path: str = os.path.relpath(source_file, root_path).replace(os.sep, "/")
 
+    # Some inherited members (e.g. sklearn's set_score_request or classes_) are
+    # resolvable but defined outside the chainladder package (their source lives
+    # under site-packages). Only link objects whose source is inside the
+    # chainladder package; otherwise skip rather than emit a broken GitHub URL.
+    if not rel_path.startswith("chainladder/"):
+        return None
+
     # Extract the ending line.
     end_line: int = start_line + len(source_lines) - 1
 
