@@ -589,7 +589,249 @@ The selected reported and paid development estimators are reused in later chapte
     >>> with open(os.path.join(data_dir, "friedland_ch7_xyz_paid.json"), "w") as f:
     ...     _ = f.write(paid_devs["Selected"].to_json())
 
-Exhibit III Sheet 1 p114
+Exhibit III p114-124
 ##########################
 
-WIP
+    To examine the effect of a changing environment on the estimates produced by the development technique, we construct an example based on characteristics seen in the U.S. private passenger automobile example.
+
+    -- Friedland, p98
+
+Exhibits I and II applied the development technique to real data. Exhibit III instead uses a *controlled* example where the "true" answer is known, so we can measure how well (or badly) the development technique recovers it under four environments:
+
+- **Steady-State** - stable claim ratios, no change in case outstanding strength (Scenario 1).
+- **Increasing Claim** - claim ratios rise for the recent years, case strength unchanged (Scenario 2).
+- **Increasing Case** - stable claim ratios, but case outstanding are strengthened on the latest diagonals (Scenario 3).
+- **Increasing Claim Case** - both claim ratios and case outstanding strength increase (Scenario 4).
+
+All four scenarios are stored in a single sample, ``friedland_uspp``, indexed by ``Scenario``. Every scenario shares the same earned premium (``$1,000,000`` in 1999, growing 5% per year) and the same underlying reporting/payment patterns; they differ only in the claim ratios and the case outstanding strength baked into the triangles.
+
+.. doctest::
+
+    >>> uspp = cl.load_sample('friedland_uspp')
+    >>> uspp.index
+                    Scenario
+    0        Increasing Case
+    1       Increasing Claim
+    2  Increasing Claim Case
+    3           Steady State
+
+We slice a scenario with ``.loc[]``, exactly like selecting a column, e.g. ``uspp.loc['Steady State']``.
+
+Sheet 1 - Actual IBNR benchmark
+--------------------------------
+
+    The actual IBNR is equal to the ultimate claims projection, which is based on the given ultimate claim ratio for each accident year, minus the reported claims as of December 31, 2008.
+
+    -- Friedland, p99
+
+Because this is a constructed example, we *know* the ultimate claim ratios. Steady-State and Increasing Case both assume a flat 70% ultimate claim ratio; the two "Increasing Claim" scenarios ramp the ratio up for the latest accident years (80% in 2004 rising to 100% in 2008). Multiplying earned premium by these ratios gives the "true" ultimate claims, and subtracting the reported claims at 12/31/2008 gives the *actual* IBNR that each development projection will be judged against.
+
+.. doctest::
+
+    >>> steady_ratio = {y: 0.70 for y in range(1999, 2009)}
+    >>> increasing_ratio = {**{y: 0.70 for y in range(1999, 2004)},
+    ...     2004: 0.80, 2005: 0.85, 2006: 0.90, 2007: 0.95, 2008: 1.00}
+    >>> ratio_map = {
+    ...     'Steady State': steady_ratio,
+    ...     'Increasing Claim': increasing_ratio,
+    ...     'Increasing Case': steady_ratio,
+    ...     'Increasing Claim Case': increasing_ratio,
+    ... }
+    >>> def actual_ibnr(scenario: str) -> pd.DataFrame():
+    ...     sub = uspp.loc[scenario]
+    ...     ep = sub['Earned Premium'].latest_diagonal.to_frame(origin_as_datetime=False).iloc[:, 0]
+    ...     years = [d.year for d in ep.index]
+    ...     ratios = np.array([ratio_map[scenario][y] for y in years])
+    ...     out = pd.DataFrame(index=years)
+    ...     out['Earned Premium'] = ep.round(0).values
+    ...     out['Ult Claim Ratio'] = ratios
+    ...     out['Ultimate Claims'] = (ep.values * ratios).round(0) # unrounded premium, matching the text
+    ...     out['Reported Claims'] = sub['Reported Claims'].latest_diagonal.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['Actual IBNR'] = (out['Ultimate Claims'] - out['Reported Claims']).round(0)
+    ...     return out
+
+For the steady-state environment every year carries a 70% ultimate claim ratio, and the actual IBNR totals about ``$438,638``.
+
+.. doctest::
+
+    >>> actual_ibnr('Steady State')
+          Earned Premium  Ult Claim Ratio  Ultimate Claims  Reported Claims  Actual IBNR
+    1999       1000000.0              0.7         700000.0         700000.0          0.0
+    2000       1050000.0              0.7         735000.0         735000.0          0.0
+    2001       1102500.0              0.7         771750.0         771750.0          0.0
+    2002       1157625.0              0.7         810338.0         810338.0          0.0
+    2003       1215506.0              0.7         850854.0         842346.0       8508.0
+    2004       1276282.0              0.7         893397.0         884463.0       8934.0
+    2005       1340096.0              0.7         938067.0         919306.0      18761.0
+    2006       1407100.0              0.7         984970.0         935722.0      49248.0
+    2007       1477455.0              0.7        1034219.0         930797.0     103422.0
+    2008       1551328.0              0.7        1085930.0         836166.0     249764.0
+
+The increasing-case scenario shares the same 70% ultimate claims, but the strengthened case reserves push up the reported claims on the latest diagonal, so the actual IBNR is *smaller* (about ``$253,336``).
+
+.. doctest::
+
+    >>> actual_ibnr('Increasing Case')
+          Earned Premium  Ult Claim Ratio  Ultimate Claims  Reported Claims  Actual IBNR
+    1999       1000000.0              0.7         700000.0         700000.0          0.0
+    2000       1050000.0              0.7         735000.0         735000.0          0.0
+    2001       1102500.0              0.7         771750.0         771750.0          0.0
+    2002       1157625.0              0.7         810338.0         810338.0          0.0
+    2003       1215506.0              0.7         850854.0         842346.0       8508.0
+    2004       1276282.0              0.7         893397.0         884463.0       8934.0
+    2005       1340096.0              0.7         938067.0         933377.0       4690.0
+    2006       1407100.0              0.7         984970.0         962808.0      22162.0
+    2007       1477455.0              0.7        1034219.0         979922.0      54297.0
+    2008       1551328.0              0.7        1085930.0         931185.0     154745.0
+
+Sheets 2-9 - Reading the triangles
+-----------------------------------
+
+Sheets 2 through 9 hold the reported and paid triangles for each scenario. The key diagnostic is the age-to-age triangle. In the steady-state world the factors are constant down every column, but when case outstanding are strengthened the *latest diagonals* of the reported age-to-age factors are inflated. Compare the bottom-right of the increasing-case reported factors below (e.g. 1.184 and 1.198 at 12-24, versus the steady 1.169):
+
+.. doctest::
+
+    >>> uspp.loc['Increasing Case']['Reported Claims'].age_to_age.round(3)
+          12-24  24-36  36-48  48-60  60-72  72-84  84-96  96-108  108-120
+    1999  1.169  1.056  1.032  1.010    1.0   1.01    1.0     1.0      1.0
+    2000  1.169  1.056  1.032  1.010    1.0   1.01    1.0     1.0      NaN
+    2001  1.169  1.056  1.032  1.010    1.0   1.01    1.0     NaN      NaN
+    2002  1.169  1.056  1.032  1.010    1.0   1.01    NaN     NaN      NaN
+    2003  1.169  1.056  1.032  1.010    1.0    NaN    NaN     NaN      NaN
+    2004  1.169  1.056  1.035  1.007    NaN    NaN    NaN     NaN      NaN
+    2005  1.169  1.063  1.040    NaN    NaN    NaN    NaN     NaN      NaN
+    2006  1.184  1.073    NaN    NaN    NaN    NaN    NaN     NaN      NaN
+    2007  1.198    NaN    NaN    NaN    NaN    NaN    NaN     NaN      NaN
+
+These inflated factors feed into higher volume-weighted averages and therefore higher CDFs, which is the mechanism that will overstate the reported projection.
+
+Sheets 10-11 - Development of unpaid claim estimate
+----------------------------------------------------
+
+    To simplify the presentation of the various scenarios, we always select reported and paid age-to-age factors based on a five-year volume-weighted average.
+
+    -- Friedland, p100
+
+We now run the development technique mechanically - a five-year volume-weighted average with a ``1.000`` tail - for both reported and paid claims, deliberately *not* adjusting for the changing environment. The ``cdf_`` attribute cumulates the (unrounded) age-to-age factors and we round only for display, while the projected ultimates come from the ``Chainladder`` estimator at full precision (this is how the text reconciles the steady state exactly).
+
+.. doctest::
+
+    >>> def dev_unpaid(scenario: str) -> pd.DataFrame():
+    ...     sub = uspp.loc[scenario]
+    ...     reported, paid = sub['Reported Claims'], sub['Paid Claims']
+    ...     rep_dev = cl.TailConstant(tail=1.0, projection_period=0).fit_transform(
+    ...         cl.Development(n_periods=5, average='volume').fit_transform(reported))
+    ...     pd_dev = cl.TailConstant(tail=1.0, projection_period=0).fit_transform(
+    ...         cl.Development(n_periods=5, average='volume').fit_transform(paid))
+    ...     years = [d.year for d in reported.origin]
+    ...     out = pd.DataFrame(index=years)
+    ...     out['Reported'] = reported.latest_diagonal.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['Paid'] = paid.latest_diagonal.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['CDF Reported'] = rep_dev.cdf_.round(3).T.iloc[::-1, 0].values # 120-Ult..12-Ult mapped to 1999..2008
+    ...     out['CDF Paid'] = pd_dev.cdf_.round(3).T.iloc[::-1, 0].values
+    ...     out['Ult Reported'] = cl.Chainladder().fit(rep_dev).ultimate_.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['Ult Paid'] = cl.Chainladder().fit(pd_dev).ultimate_.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['IBNR Reported'] = (out['Ult Reported'] - out['Reported']).round(0)
+    ...     out['IBNR Paid'] = (out['Ult Paid'] - out['Reported']).round(0)
+    ...     return out
+
+The detailed calculation for the increasing-case scenario shows the problem clearly. The reported CDFs on the latest three accident years (1.055, 1.119, 1.318) are higher than the steady-state CDFs, so the reported projection is applied to an already-strengthened reported diagonal - a double count.
+
+.. doctest::
+
+    >>> dev_unpaid('Increasing Case')
+          Reported      Paid  CDF Reported  CDF Paid  Ult Reported   Ult Paid  IBNR Reported  IBNR Paid
+    1999  700000.0  700000.0         1.000     1.000      700000.0   700000.0            0.0        0.0
+    2000  735000.0  735000.0         1.000     1.000      735000.0   735000.0            0.0        0.0
+    2001  771750.0  764033.0         1.000     1.010      771750.0   771751.0            0.0        1.0
+    2002  810338.0  802234.0         1.000     1.010      810338.0   810337.0            0.0       -1.0
+    2003  842346.0  833837.0         1.010     1.020      850855.0   850854.0         8509.0     8508.0
+    2004  884463.0  857661.0         1.010     1.042      893397.0   893397.0         8934.0     8934.0
+    2005  933377.0  863022.0         1.020     1.087      951657.0   938067.0        18280.0     4690.0
+    2006  962808.0  827375.0         1.055     1.190     1015301.0   984970.0        52493.0    22162.0
+    2007  979922.0  734295.0         1.119     1.408     1096235.0  1034218.0       116313.0    54296.0
+    2008  931185.0  456090.0         1.318     2.381     1227589.0  1085928.0       296404.0   154743.0
+
+Collecting the total estimated IBNR from both methods across all four scenarios, and comparing to the actual IBNR benchmark, summarises the entire lesson of the chapter:
+
+.. doctest::
+
+    >>> scenarios = ['Steady State', 'Increasing Claim', 'Increasing Case', 'Increasing Claim Case']
+    >>> summary = pd.DataFrame(index=scenarios)
+    >>> summary['Actual IBNR'] = [actual_ibnr(s)['Actual IBNR'].sum() for s in scenarios]
+    >>> summary['Reported Method'] = [dev_unpaid(s)['IBNR Reported'].sum() for s in scenarios]
+    >>> summary['Paid Method'] = [dev_unpaid(s)['IBNR Paid'].sum() for s in scenarios]
+    >>> summary
+                           Actual IBNR  Reported Method  Paid Method
+    Steady State              438637.0         438639.0     438634.0
+    Increasing Claim          601982.0         601984.0     601982.0
+    Increasing Case           253336.0         500933.0     253333.0
+    Increasing Claim Case     347658.0         693777.0     347658.0
+
+The takeaways match Friedland:
+
+- **Steady-State** - both methods recover the actual IBNR. When nothing changes, the development technique works.
+- **Increasing Claim** - both methods again match the actual IBNR. The technique *is* responsive to changing claim ratios, because higher claims simply flow through the latest diagonal without disturbing the age-to-age factors.
+- **Increasing Case** - the paid method still matches (paid claims are untouched by case strengthening), but the reported method overstates IBNR by nearly double (``$500,933`` vs ``$253,336``). Strengthened case reserves inflate both the latest reported diagonal *and* the age-to-age factors, so the projection multiplies an already-higher number by an inappropriately higher CDF.
+- **Increasing Claim Case** - the same overstatement appears in the reported method, while the paid method remains accurate.
+
+The practical conclusion is that in periods of changing case outstanding adequacy the actuary should lean on the paid development method (or explicitly adjust the reported factors), because the reported development method silently double-counts the strengthening.
+
+Exhibit IV p125-130
+##########################
+
+    We will see that the development technique is an acceptable method for determining estimates of unpaid claims for the combined portfolio as long as there are no changes in the mix of business.
+
+    -- Friedland, p103
+
+Exhibit IV turns to a different failure mode: a **change in product mix**. Here a combined portfolio blends private passenger automobile (70% ultimate claim ratio, faster reporting) with commercial automobile (80% ultimate claim ratio, slower reporting). Two environments are compared - a steady state where both grow 5% per year, and a changing mix where commercial premium grows 30% per year from 2005, so the slower-reporting business steadily takes over the portfolio.
+
+The two triangles live in separate samples, ``friedland_us_auto_steady_state`` and ``friedland_us_auto_chg_prod_mix``. The earned premium and claim ratios are assumptions of the example rather than data in the triangle, so we build the actual-IBNR benchmark directly from them.
+
+.. doctest::
+
+    >>> years = list(range(1999, 2009))
+    >>> pp_prem = [1_000_000 * 1.05 ** (y - 1999) for y in years]
+    >>> comm_steady = [1_000_000 * 1.05 ** (y - 1999) for y in years]
+    >>> comm_chg = [1_000_000 * 1.05 ** (y - 1999) if y < 2005
+    ...     else 1_000_000 * 1.05 ** 5 * 1.30 ** (y - 2004) for y in years]
+    >>> def prod_mix(sample: str, comm_prem: list) -> pd.DataFrame():
+    ...     t = cl.load_sample(sample)
+    ...     reported, paid = t['Reported Claims'], t['Paid Claims']
+    ...     rep_dev = cl.TailConstant(tail=1.0, projection_period=0).fit_transform(
+    ...         cl.Development(n_periods=5, average='volume').fit_transform(reported))
+    ...     pd_dev = cl.TailConstant(tail=1.0, projection_period=0).fit_transform(
+    ...         cl.Development(n_periods=5, average='volume').fit_transform(paid))
+    ...     out = pd.DataFrame(index=years)
+    ...     out['Reported'] = reported.latest_diagonal.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['Ult Reported'] = cl.Chainladder().fit(rep_dev).ultimate_.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['Ult Paid'] = cl.Chainladder().fit(pd_dev).ultimate_.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['True Ultimate'] = np.array([0.70 * pp + 0.80 * cm for pp, cm in zip(pp_prem, comm_prem)]).round(0)
+    ...     out['IBNR Reported'] = (out['Ult Reported'] - out['Reported']).round(0)
+    ...     out['IBNR Paid'] = (out['Ult Paid'] - out['Reported']).round(0)
+    ...     out['Actual IBNR'] = (out['True Ultimate'] - out['Reported']).round(0)
+    ...     return out
+
+With no change in mix, both development methods recover the actual IBNR of about ``$1,394,634``.
+
+.. doctest::
+
+    >>> steady_mix = prod_mix('friedland_us_auto_steady_state', comm_steady)
+    >>> steady_mix[['IBNR Reported', 'IBNR Paid', 'Actual IBNR']].sum()
+    IBNR Reported    1394634.0
+    IBNR Paid        1394633.0
+    Actual IBNR      1394633.0
+    dtype: float64
+
+Once the mix shifts toward the slower-reporting commercial book, both methods fall short of the truth - even though the changing mix *does* pull the age-to-age factors and CDFs upward, it does not raise them enough to keep pace with the growing tail of the commercial business.
+
+.. doctest::
+
+    >>> changing_mix = prod_mix('friedland_us_auto_chg_prod_mix', comm_chg)
+    >>> changing_mix[['IBNR Reported', 'IBNR Paid', 'Actual IBNR']].sum()
+    IBNR Reported    2152788.0
+    IBNR Paid        1722700.0
+    Actual IBNR      2391083.0
+    dtype: float64
+
+Here the reported method (``$2,152,788``) is more responsive than the paid method (``$1,722,700``) because claims report faster than they pay, but both understate the actual IBNR of ``$2,391,083``. As Friedland notes, a shift in the underlying mix of business - or, within a single line, a shift in the types of claims occurring - can seriously distort the development technique, and no single choice of averaging period fully repairs it.
