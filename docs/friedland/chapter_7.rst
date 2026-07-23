@@ -684,10 +684,140 @@ The increasing-case scenario shares the same 70% ultimate claims, but the streng
     2007       1477455.0              0.7        1034219.0         979922.0      54297.0
     2008       1551328.0              0.7        1085930.0         931185.0     154745.0
 
-Sheets 2-9 - Reading the triangles
+The two increasing-claim-ratio scenarios ramp the ultimate claim ratio from 70% up to 100% for the latest accident years. Their ultimate claims (and therefore actual IBNR) are larger. The plain increasing-claim scenario has no case strengthening, so its reported claims match the steady-state emergence at the higher claim level:
+
+.. doctest::
+
+    >>> actual_ibnr('Increasing Claim')
+          Earned Premium  Ult Claim Ratio  Ultimate Claims  Reported Claims  Actual IBNR
+    1999       1000000.0             0.70         700000.0         700000.0          0.0
+    2000       1050000.0             0.70         735000.0         735000.0          0.0
+    2001       1102500.0             0.70         771750.0         771750.0          0.0
+    2002       1157625.0             0.70         810338.0         810338.0          0.0
+    2003       1215506.0             0.70         850854.0         842346.0       8508.0
+    2004       1276282.0             0.80        1021025.0        1010815.0      10210.0
+    2005       1340096.0             0.85        1139081.0        1116300.0      22781.0
+    2006       1407100.0             0.90        1266390.0        1203071.0      63319.0
+    2007       1477455.0             0.95        1403583.0        1263224.0     140359.0
+    2008       1551328.0             1.00        1551328.0        1194523.0     356805.0
+
+The combined scenario has both the higher claim ratios *and* the strengthened case reserves, so the reported diagonal is highest and the actual IBNR is smaller than the pure increasing-claim case:
+
+.. doctest::
+
+    >>> actual_ibnr('Increasing Claim Case')
+          Earned Premium  Ult Claim Ratio  Ultimate Claims  Reported Claims  Actual IBNR
+    1999       1000000.0             0.70         700000.0         700000.0          0.0
+    2000       1050000.0             0.70         735000.0         735000.0          0.0
+    2001       1102500.0             0.70         771750.0         771750.0          0.0
+    2002       1157625.0             0.70         810338.0         810338.0          0.0
+    2003       1215506.0             0.70         850854.0         842346.0       8508.0
+    2004       1276282.0             0.80        1021025.0        1010815.0      10210.0
+    2005       1340096.0             0.85        1139081.0        1133386.0       5695.0
+    2006       1407100.0             0.90        1266390.0        1237897.0      28493.0
+    2007       1477455.0             0.95        1403583.0        1329895.0      73688.0
+    2008       1551328.0             1.00        1551328.0        1330264.0     221064.0
+
+Sheets 2-9 - The scenario triangles
 -----------------------------------
 
-Sheets 2 through 9 hold the reported and paid triangles for each scenario. The key diagnostic is the age-to-age triangle. In the steady-state world the factors are constant down every column, but when case outstanding are strengthened the *latest diagonals* of the reported age-to-age factors are inflated. Compare the bottom-right of the increasing-case reported factors below (e.g. 1.184 and 1.198 at 12-24, versus the steady 1.169):
+Sheets 2 through 9 hold the reported and paid triangles for each scenario. All four reported triangles differ, but there are only two distinct paid triangles: case strengthening never touches paid claims, so **Steady State and Increasing Case share one paid triangle**, and **Increasing Claim and Increasing Claim Case share another**.
+
+The steady-state reported and paid triangles (Sheets 2 and 3) are the baseline every other scenario is measured against:
+
+.. doctest::
+
+    >>> uspp.loc['Steady State']['Reported Claims']
+               12        24        36        48        60        72        84        96        108       120
+    1999  539000.0  630000.0  665000.0  686000.0  693000.0  693000.0  700000.0  700000.0  700000.0  700000.0
+    2000  565950.0  661500.0  698250.0  720300.0  727650.0  727650.0  735000.0  735000.0  735000.0       NaN
+    2001  594248.0  694575.0  733163.0  756315.0  764033.0  764033.0  771750.0  771750.0       NaN       NaN
+    2002  623960.0  729304.0  769821.0  794131.0  802234.0  802234.0  810338.0       NaN       NaN       NaN
+    2003  655158.0  765769.0  808312.0  833837.0  842346.0  842346.0       NaN       NaN       NaN       NaN
+    2004  687916.0  804057.0  848727.0  875529.0  884463.0       NaN       NaN       NaN       NaN       NaN
+    2005  722312.0  844260.0  891164.0  919306.0       NaN       NaN       NaN       NaN       NaN       NaN
+    2006  758427.0  886473.0  935722.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2007  796348.0  930797.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2008  836166.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+
+    >>> uspp.loc['Steady State']['Paid Claims']
+               12        24        36        48        60        72        84        96        108       120
+    1999  294000.0  497000.0  588000.0  644000.0  672000.0  686000.0  693000.0  693000.0  700000.0  700000.0
+    2000  308700.0  521850.0  617400.0  676200.0  705600.0  720300.0  727650.0  727650.0  735000.0       NaN
+    2001  324135.0  547943.0  648270.0  710010.0  740880.0  756315.0  764033.0  764033.0       NaN       NaN
+    2002  340342.0  575340.0  680684.0  745511.0  777924.0  794131.0  802234.0       NaN       NaN       NaN
+    2003  357359.0  604107.0  714718.0  782786.0  816820.0  833837.0       NaN       NaN       NaN       NaN
+    2004  375227.0  634312.0  750454.0  821925.0  857661.0       NaN       NaN       NaN       NaN       NaN
+    2005  393988.0  666028.0  787976.0  863022.0       NaN       NaN       NaN       NaN       NaN       NaN
+    2006  413688.0  699329.0  827375.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2007  434372.0  734295.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2008  456090.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+
+The increasing-claim reported and paid triangles (Sheets 4 and 5) match steady-state for 1999-2003, then jump higher from 2004 as the claim ratio rises:
+
+.. doctest::
+
+    >>> uspp.loc['Increasing Claim']['Reported Claims']
+                12         24         36         48         60        72        84        96        108       120
+    1999   539000.0   630000.0   665000.0   686000.0   693000.0  693000.0  700000.0  700000.0  700000.0  700000.0
+    2000   565950.0   661500.0   698250.0   720300.0   727650.0  727650.0  735000.0  735000.0  735000.0       NaN
+    2001   594248.0   694575.0   733163.0   756315.0   764033.0  764033.0  771750.0  771750.0       NaN       NaN
+    2002   623960.0   729304.0   769821.0   794131.0   802234.0  802234.0  810338.0       NaN       NaN       NaN
+    2003   655158.0   765769.0   808312.0   833837.0   842346.0  842346.0       NaN       NaN       NaN       NaN
+    2004   786189.0   918923.0   969974.0  1000605.0  1010815.0       NaN       NaN       NaN       NaN       NaN
+    2005   877093.0  1025173.0  1082127.0  1116300.0        NaN       NaN       NaN       NaN       NaN       NaN
+    2006   975121.0  1139751.0  1203071.0        NaN        NaN       NaN       NaN       NaN       NaN       NaN
+    2007  1080759.0  1263224.0        NaN        NaN        NaN       NaN       NaN       NaN       NaN       NaN
+    2008  1194523.0        NaN        NaN        NaN        NaN       NaN       NaN       NaN       NaN       NaN
+
+    >>> uspp.loc['Increasing Claim']['Paid Claims']
+               12        24         36         48        60        72        84        96        108       120
+    1999  294000.0  497000.0   588000.0   644000.0  672000.0  686000.0  693000.0  693000.0  700000.0  700000.0
+    2000  308700.0  521850.0   617400.0   676200.0  705600.0  720300.0  727650.0  727650.0  735000.0       NaN
+    2001  324135.0  547943.0   648270.0   710010.0  740880.0  756315.0  764033.0  764033.0       NaN       NaN
+    2002  340342.0  575340.0   680684.0   745511.0  777924.0  794131.0  802234.0       NaN       NaN       NaN
+    2003  357359.0  604107.0   714718.0   782786.0  816820.0  833837.0       NaN       NaN       NaN       NaN
+    2004  428831.0  724928.0   857661.0   939343.0  980184.0       NaN       NaN       NaN       NaN       NaN
+    2005  478414.0  808748.0   956828.0  1047955.0       NaN       NaN       NaN       NaN       NaN       NaN
+    2006  531884.0  899137.0  1063768.0        NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2007  589505.0  996544.0        NaN        NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2008  651558.0       NaN        NaN        NaN       NaN       NaN       NaN       NaN       NaN       NaN
+
+The increasing-case reported triangle (Sheet 6) keeps the steady-state claim level but strengthens the case reserves on the last two diagonals (its paid triangle is identical to steady-state, Sheet 7):
+
+.. doctest::
+
+    >>> uspp.loc['Increasing Case']['Reported Claims']
+               12        24        36        48        60        72        84        96        108       120
+    1999  539000.0  630000.0  665000.0  686000.0  693000.0  693000.0  700000.0  700000.0  700000.0  700000.0
+    2000  565950.0  661500.0  698250.0  720300.0  727650.0  727650.0  735000.0  735000.0  735000.0       NaN
+    2001  594248.0  694575.0  733163.0  756315.0  764033.0  764033.0  771750.0  771750.0       NaN       NaN
+    2002  623960.0  729304.0  769821.0  794131.0  802234.0  802234.0  810338.0       NaN       NaN       NaN
+    2003  655158.0  765769.0  808312.0  833837.0  842346.0  842346.0       NaN       NaN       NaN       NaN
+    2004  687916.0  804057.0  848727.0  878745.0  884463.0       NaN       NaN       NaN       NaN       NaN
+    2005  722312.0  844260.0  897355.0  933377.0       NaN       NaN       NaN       NaN       NaN       NaN
+    2006  758427.0  897702.0  962808.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2007  818067.0  979922.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+    2008  931185.0       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+
+The combined reported triangle (Sheet 8) stacks both effects - higher claim level and strengthened case (its paid triangle equals the increasing-claim one, Sheet 9):
+
+.. doctest::
+
+    >>> uspp.loc['Increasing Claim Case']['Reported Claims']
+                12         24         36         48         60        72        84        96        108       120
+    1999   539000.0   630000.0   665000.0   686000.0   693000.0  693000.0  700000.0  700000.0  700000.0  700000.0
+    2000   565950.0   661500.0   698250.0   720300.0   727650.0  727650.0  735000.0  735000.0  735000.0       NaN
+    2001   594248.0   694575.0   733163.0   756315.0   764033.0  764033.0  771750.0  771750.0       NaN       NaN
+    2002   623960.0   729304.0   769821.0   794131.0   802234.0  802234.0  810338.0       NaN       NaN       NaN
+    2003   655158.0   765769.0   808312.0   833837.0   842346.0  842346.0       NaN       NaN       NaN       NaN
+    2004   786189.0   918923.0   969974.0  1004280.0  1010815.0       NaN       NaN       NaN       NaN       NaN
+    2005   877093.0  1025173.0  1089645.0  1133386.0        NaN       NaN       NaN       NaN       NaN       NaN
+    2006   975121.0  1154188.0  1237897.0        NaN        NaN       NaN       NaN       NaN       NaN       NaN
+    2007  1110234.0  1329895.0        NaN        NaN        NaN       NaN       NaN       NaN       NaN       NaN
+    2008  1330264.0        NaN        NaN        NaN        NaN       NaN       NaN       NaN       NaN       NaN
+
+The key diagnostic is the age-to-age triangle. In the steady-state world the factors are constant down every column, but when case outstanding are strengthened the *latest diagonals* of the reported age-to-age factors are inflated. Compare the bottom-right of the increasing-case reported factors below (e.g. 1.184 and 1.198 at 12-24, versus the steady 1.169):
 
 .. doctest::
 
@@ -752,6 +882,57 @@ The detailed calculation for the increasing-case scenario shows the problem clea
     2007  979922.0  734295.0         1.119     1.408     1096235.0  1034218.0       116313.0    54296.0
     2008  931185.0  456090.0         1.318     2.381     1227589.0  1085928.0       296404.0   154743.0
 
+For contrast, in the steady-state scenario the reported and paid CDFs are unchanged from the true pattern, so both methods reproduce the actual IBNR almost exactly:
+
+.. doctest::
+
+    >>> dev_unpaid('Steady State')
+          Reported      Paid  CDF Reported  CDF Paid  Ult Reported   Ult Paid  IBNR Reported  IBNR Paid
+    1999  700000.0  700000.0         1.000     1.000      700000.0   700000.0            0.0        0.0
+    2000  735000.0  735000.0         1.000     1.000      735000.0   735000.0            0.0        0.0
+    2001  771750.0  764033.0         1.000     1.010      771750.0   771751.0            0.0        1.0
+    2002  810338.0  802234.0         1.000     1.010      810338.0   810337.0            0.0       -1.0
+    2003  842346.0  833837.0         1.010     1.020      850855.0   850854.0         8509.0     8508.0
+    2004  884463.0  857661.0         1.010     1.042      893397.0   893397.0         8934.0     8934.0
+    2005  919306.0  863022.0         1.020     1.087      938068.0   938067.0        18762.0    18761.0
+    2006  935722.0  827375.0         1.053     1.190      984970.0   984970.0        49248.0    49248.0
+    2007  930797.0  734295.0         1.111     1.408     1034219.0  1034218.0       103422.0   103421.0
+    2008  836166.0  456090.0         1.299     2.381     1085930.0  1085928.0       249764.0   249762.0
+
+The increasing-claim scenario keeps the steady-state CDFs (case strength is unchanged), so the technique stays accurate - it simply passes the higher reported/paid diagonal through the same pattern:
+
+.. doctest::
+
+    >>> dev_unpaid('Increasing Claim')
+           Reported       Paid  CDF Reported  CDF Paid  Ult Reported   Ult Paid  IBNR Reported  IBNR Paid
+    1999   700000.0   700000.0         1.000     1.000      700000.0   700000.0            0.0        0.0
+    2000   735000.0   735000.0         1.000     1.000      735000.0   735000.0            0.0        0.0
+    2001   771750.0   764033.0         1.000     1.010      771750.0   771751.0            0.0        1.0
+    2002   810338.0   802234.0         1.000     1.010      810338.0   810337.0            0.0       -1.0
+    2003   842346.0   833837.0         1.010     1.020      850855.0   850854.0         8509.0     8508.0
+    2004  1010815.0   980184.0         1.010     1.042     1021025.0  1021025.0        10210.0    10210.0
+    2005  1116300.0  1047955.0         1.020     1.087     1139082.0  1139081.0        22782.0    22781.0
+    2006  1203071.0  1063768.0         1.053     1.190     1266391.0  1266390.0        63320.0    63319.0
+    2007  1263224.0   996544.0         1.111     1.408     1403582.0  1403583.0       140358.0   140359.0
+    2008  1194523.0   651558.0         1.299     2.381     1551328.0  1551328.0       356805.0   356805.0
+
+The combined scenario shows both effects at once: the reported method is inflated by the case strengthening (as in the increasing-case scenario) while still responding to the higher claim ratios, so its IBNR badly overstates the paid method:
+
+.. doctest::
+
+    >>> dev_unpaid('Increasing Claim Case')
+           Reported       Paid  CDF Reported  CDF Paid  Ult Reported   Ult Paid  IBNR Reported  IBNR Paid
+    1999   700000.0   700000.0         1.000     1.000      700000.0   700000.0            0.0        0.0
+    2000   735000.0   735000.0         1.000     1.000      735000.0   735000.0            0.0        0.0
+    2001   771750.0   764033.0         1.000     1.010      771750.0   771751.0            0.0        1.0
+    2002   810338.0   802234.0         1.000     1.010      810338.0   810337.0            0.0       -1.0
+    2003   842346.0   833837.0         1.010     1.020      850855.0   850854.0         8509.0     8508.0
+    2004  1010815.0   980184.0         1.010     1.042     1021025.0  1021025.0        10210.0    10210.0
+    2005  1133386.0  1047955.0         1.019     1.087     1155482.0  1139081.0        22096.0     5695.0
+    2006  1237897.0  1063768.0         1.055     1.190     1305639.0  1266390.0        67742.0    28493.0
+    2007  1329895.0   996544.0         1.120     1.408     1488875.0  1403583.0       158980.0    73688.0
+    2008  1330264.0   651558.0         1.320     2.381     1756504.0  1551328.0       426240.0   221064.0
+
 Collecting the total estimated IBNR from both methods across all four scenarios, and comparing to the actual IBNR benchmark, summarises the entire lesson of the chapter:
 
 .. doctest::
@@ -804,6 +985,9 @@ The two triangles live in separate samples, ``friedland_us_auto_steady_state`` a
     ...         cl.Development(n_periods=5, average='volume').fit_transform(paid))
     ...     out = pd.DataFrame(index=years)
     ...     out['Reported'] = reported.latest_diagonal.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['Paid'] = paid.latest_diagonal.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
+    ...     out['CDF Reported'] = rep_dev.cdf_.round(3).T.iloc[::-1, 0].values
+    ...     out['CDF Paid'] = pd_dev.cdf_.round(3).T.iloc[::-1, 0].values
     ...     out['Ult Reported'] = cl.Chainladder().fit(rep_dev).ultimate_.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
     ...     out['Ult Paid'] = cl.Chainladder().fit(pd_dev).ultimate_.to_frame(origin_as_datetime=False).iloc[:, 0].round(0).values
     ...     out['True Ultimate'] = np.array([0.70 * pp + 0.80 * cm for pp, cm in zip(pp_prem, comm_prem)]).round(0)
@@ -812,22 +996,108 @@ The two triangles live in separate samples, ``friedland_us_auto_steady_state`` a
     ...     out['Actual IBNR'] = (out['True Ultimate'] - out['Reported']).round(0)
     ...     return out
 
-With no change in mix, both development methods recover the actual IBNR of about ``$1,394,634``.
+Sheets 2-5 hold the combined-portfolio triangles. Under the steady-state mix (Sheets 2 and 3) both lines grow 5% per year, so the reported and paid triangles develop with stable age-to-age factors:
+
+.. doctest::
+
+    >>> cl.load_sample('friedland_us_auto_steady_state')['Reported Claims']
+                12         24         36         48         60         72         84         96         108        120
+    1999  1011000.0  1254000.0  1377000.0  1454000.0  1477000.0  1493000.0  1500000.0  1500000.0  1500000.0  1500000.0
+    2000  1061550.0  1316700.0  1445850.0  1526700.0  1550850.0  1567650.0  1575000.0  1575000.0  1575000.0        NaN
+    2001  1114628.0  1382535.0  1518143.0  1603035.0  1628393.0  1646033.0  1653750.0  1653750.0        NaN        NaN
+    2002  1170359.0  1451662.0  1594050.0  1683187.0  1709812.0  1728334.0  1736438.0        NaN        NaN        NaN
+    2003  1228877.0  1524245.0  1673752.0  1767346.0  1795303.0  1814751.0        NaN        NaN        NaN        NaN
+    2004  1290321.0  1600457.0  1757440.0  1855713.0  1885068.0        NaN        NaN        NaN        NaN        NaN
+    2005  1354837.0  1680480.0  1845312.0  1948499.0        NaN        NaN        NaN        NaN        NaN        NaN
+    2006  1422579.0  1764504.0  1937577.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2007  1493707.0  1852729.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2008  1568393.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+
+    >>> cl.load_sample('friedland_us_auto_steady_state')['Paid Claims']
+               12         24         36         48         60         72         84         96         108        120
+    1999  470000.0   865000.0  1124000.0  1300000.0  1400000.0  1446000.0  1469000.0  1477000.0  1492000.0  1500000.0
+    2000  493500.0   908250.0  1180200.0  1365000.0  1470000.0  1518300.0  1542450.0  1550850.0  1566600.0        NaN
+    2001  518175.0   953663.0  1239210.0  1433250.0  1543500.0  1594215.0  1619573.0  1628393.0        NaN        NaN
+    2002  544084.0  1001346.0  1301171.0  1504913.0  1620675.0  1673926.0  1700551.0        NaN        NaN        NaN
+    2003  571288.0  1051413.0  1366229.0  1580158.0  1701709.0  1757622.0        NaN        NaN        NaN        NaN
+    2004  599852.0  1103984.0  1434540.0  1659166.0  1786794.0        NaN        NaN        NaN        NaN        NaN
+    2005  629845.0  1159183.0  1506268.0  1742124.0        NaN        NaN        NaN        NaN        NaN        NaN
+    2006  661337.0  1217142.0  1581581.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2007  694404.0  1277999.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2008  729124.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+
+Under the changing mix (Sheets 4 and 5) the triangles match steady-state through 2004, then climb faster from 2005 as the slower-reporting commercial book grows at 30% per year - which also lifts the age-to-age factors on the recent rows:
+
+.. doctest::
+
+    >>> cl.load_sample('friedland_us_auto_chg_prod_mix')['Reported Claims']
+                12         24         36         48         60         72         84         96         108        120
+    1999  1011000.0  1254000.0  1377000.0  1454000.0  1477000.0  1493000.0  1500000.0  1500000.0  1500000.0  1500000.0
+    2000  1061550.0  1316700.0  1445850.0  1526700.0  1550850.0  1567650.0  1575000.0  1575000.0  1575000.0        NaN
+    2001  1114628.0  1382535.0  1518143.0  1603035.0  1628393.0  1646033.0  1653750.0  1653750.0        NaN        NaN
+    2002  1170359.0  1451662.0  1594050.0  1683187.0  1709812.0  1728334.0  1736438.0        NaN        NaN        NaN
+    2003  1228877.0  1524245.0  1673752.0  1767346.0  1795303.0  1814751.0        NaN        NaN        NaN        NaN
+    2004  1290321.0  1600457.0  1757440.0  1855713.0  1885068.0        NaN        NaN        NaN        NaN        NaN
+    2005  1505438.0  1879580.0  2072490.0  2193545.0        NaN        NaN        NaN        NaN        NaN        NaN
+    2006  1776491.0  2232389.0  2471446.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2007  2119832.0  2680487.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2008  2556695.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+
+    >>> cl.load_sample('friedland_us_auto_chg_prod_mix')['Paid Claims']
+                12         24         36         48         60         72         84         96         108        120
+    1999   470000.0   865000.0  1124000.0  1300000.0  1400000.0  1446000.0  1469000.0  1477000.0  1492000.0  1500000.0
+    2000   493500.0   908250.0  1180200.0  1365000.0  1470000.0  1518300.0  1542450.0  1550850.0  1566600.0        NaN
+    2001   518175.0   953663.0  1239210.0  1433250.0  1543500.0  1594215.0  1619573.0  1628393.0        NaN        NaN
+    2002   544084.0  1001346.0  1301171.0  1504913.0  1620675.0  1673926.0  1700551.0        NaN        NaN        NaN
+    2003   571288.0  1051413.0  1366229.0  1580158.0  1701709.0  1757622.0        NaN        NaN        NaN        NaN
+    2004   599852.0  1103984.0  1434540.0  1659166.0  1786794.0        NaN        NaN        NaN        NaN        NaN
+    2005   686001.0  1276601.0  1677289.0  1951435.0        NaN        NaN        NaN        NaN        NaN        NaN
+    2006   793305.0  1493074.0  1983482.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2007   927874.0  1766164.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+    2008  1097644.0        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN        NaN
+
+With no change in mix (Exhibit IV, Sheet 6 top), both development methods recover the actual IBNR - every accident year reconciles to the truth:
 
 .. doctest::
 
     >>> steady_mix = prod_mix('friedland_us_auto_steady_state', comm_steady)
+    >>> steady_mix
+           Reported       Paid  CDF Reported  CDF Paid  Ult Reported   Ult Paid  True Ultimate  IBNR Reported  IBNR Paid  Actual IBNR
+    1999  1500000.0  1500000.0         1.000     1.000     1500000.0  1500000.0      1500000.0            0.0        0.0          0.0
+    2000  1575000.0  1566600.0         1.000     1.005     1575000.0  1575000.0      1575000.0            0.0        0.0          0.0
+    2001  1653750.0  1628393.0         1.000     1.016     1653750.0  1653751.0      1653750.0            0.0        1.0          0.0
+    2002  1736438.0  1700551.0         1.000     1.021     1736438.0  1736437.0      1736438.0            0.0       -1.0          0.0
+    2003  1814751.0  1757622.0         1.005     1.037     1823260.0  1823259.0      1823259.0         8509.0     8508.0       8508.0
+    2004  1885068.0  1786794.0         1.016     1.071     1914422.0  1914422.0      1914422.0        29354.0    29354.0      29354.0
+    2005  1948499.0  1742124.0         1.032     1.154     2010144.0  2010143.0      2010143.0        61645.0    61644.0      61644.0
+    2006  1937577.0  1581581.0         1.089     1.335     2110650.0  2110651.0      2110651.0       173073.0   173074.0     173074.0
+    2007  1852729.0  1277999.0         1.196     1.734     2216183.0  2216183.0      2216183.0       363454.0   363454.0     363454.0
+    2008  1568393.0   729124.0         1.484     3.191     2326992.0  2326992.0      2326992.0       758599.0   758599.0     758599.0
+
     >>> steady_mix[['IBNR Reported', 'IBNR Paid', 'Actual IBNR']].sum()
     IBNR Reported    1394634.0
     IBNR Paid        1394633.0
     Actual IBNR      1394633.0
     dtype: float64
 
-Once the mix shifts toward the slower-reporting commercial book, both methods fall short of the truth - even though the changing mix *does* pull the age-to-age factors and CDFs upward, it does not raise them enough to keep pace with the growing tail of the commercial business.
+Once the mix shifts toward the slower-reporting commercial book (Sheet 6 bottom), both methods fall short of the truth - even though the changing mix *does* pull the age-to-age factors and CDFs upward, it does not raise them enough to keep pace with the growing tail of the commercial business:
 
 .. doctest::
 
     >>> changing_mix = prod_mix('friedland_us_auto_chg_prod_mix', comm_chg)
+    >>> changing_mix
+           Reported       Paid  CDF Reported  CDF Paid  Ult Reported   Ult Paid  True Ultimate  IBNR Reported  IBNR Paid  Actual IBNR
+    1999  1500000.0  1500000.0         1.000     1.000     1500000.0  1500000.0      1500000.0            0.0        0.0          0.0
+    2000  1575000.0  1566600.0         1.000     1.005     1575000.0  1575000.0      1575000.0            0.0        0.0          0.0
+    2001  1653750.0  1628393.0         1.000     1.016     1653750.0  1653751.0      1653750.0            0.0        1.0          0.0
+    2002  1736438.0  1700551.0         1.000     1.021     1736438.0  1736437.0      1736438.0            0.0       -1.0          0.0
+    2003  1814751.0  1757622.0         1.005     1.037     1823260.0  1823259.0      1823259.0         8509.0     8508.0       8508.0
+    2004  1885068.0  1786794.0         1.016     1.071     1914422.0  1914422.0      1914422.0        29354.0    29354.0      29354.0
+    2005  2193545.0  1951435.0         1.032     1.154     2262942.0  2251656.0      2265400.0        69397.0    58111.0      71855.0
+    2006  2471446.0  1983482.0         1.090     1.336     2693735.0  2650749.0      2710503.0       222289.0   179303.0     239057.0
+    2007  2680487.0  1766164.0         1.200     1.750     3217775.0  3091665.0      3277411.0       537288.0   411178.0     596924.0
+    2008  2556695.0  1097644.0         1.503     3.273     3842646.0  3592941.0      4002080.0      1285951.0  1036246.0    1445385.0
+
     >>> changing_mix[['IBNR Reported', 'IBNR Paid', 'Actual IBNR']].sum()
     IBNR Reported    2152788.0
     IBNR Paid        1722700.0
