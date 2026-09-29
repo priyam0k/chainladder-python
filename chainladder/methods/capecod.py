@@ -259,7 +259,9 @@ class CapeCod(Benktander):
         decay_matrix = self.decay ** xp.abs(
             xp.arange(len_orig)[None].T - xp.arange(len_orig)[None]
         )
-        weighted_exposure = reported_exposure.values.swapaxes(-1, -2) * decay_matrix
+        weighted_exposure = (reported_exposure.values * sw_olf_array).swapaxes(
+            -1, -2
+        ) * decay_matrix
         trended_ultimate = (latest.values * trend_array * X_olf_array) / (
             reported_exposure.values * sw_olf_array
         )
@@ -322,6 +324,7 @@ class CapeCod(Benktander):
         if sample_weight is None:
             raise ValueError("sample_weight is required.")
         X_new = X.copy()
+        self.validate_ldf(X_new, self.ldf_)
         _, X_new.ldf_ = self.intersection(X_new, self.ldf_)
         # If model was fit at a higher grain, then need to aggregate predicted aprioris too
         if len(set(sample_weight.key_labels) - set(self.apriori_.key_labels)) > 0:
