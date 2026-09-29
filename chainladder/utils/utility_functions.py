@@ -1271,4 +1271,3 @@ def _get_axis_name(axis: int | str) -> str:
         Canonical axis name ('index', 'columns', 'origin', 'development').
     """
     return _axis_orders[_get_axis_number(axis)]
-
